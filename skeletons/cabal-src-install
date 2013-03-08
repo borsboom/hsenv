@@ -1,0 +1,30 @@
+#!/bin/sh
+
+PATH_ELEMS="$(echo ${PATH} | tr -s ':' '\n')"
+
+ORIG_CABAL_SRC_BINARY=""
+
+for PATH_ELEM in ${PATH_ELEMS}; do
+    CABAL_CANDIDATE="${PATH_ELEM}/cabal-src-install"
+    if command -v "${CABAL_CANDIDATE}" > /dev/null 2> /dev/null; then
+        if [ "${0}" != "${CABAL_CANDIDATE}" ]; then
+            if [ -z "${ORIG_CABAL_SRC_BINARY}" ]; then
+                ORIG_CABAL_SRC_BINARY="${CABAL_CANDIDATE}"
+            fi
+        fi
+    fi
+done
+
+if [ -z "${ORIG_CABAL_SRC_BINARY}" ]; then
+    echo "cabal-src-install wrapper: Couldn't find real cabal-src-install program"
+    exit 1
+fi
+
+if [ -z "<HSENV_NAME>" ]; then
+    CABAL_BUILDIR="dist"
+else
+    CABAL_BUILDIR="dist_<HSENV_NAME>"
+fi
+
+exec "${ORIG_CABAL_SRC_BINARY}"            \
+       --builddir=${CABAL_BUILDIR} "${@}"
